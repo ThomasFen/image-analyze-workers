@@ -4,14 +4,11 @@ import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detec
 import { BackendTypes, FacemeshConfig, FacemeshOperationParams, ModelTypes, WorkerCommand, WorkerResponse } from "./const";
 import * as tf from "@tensorflow/tfjs";
 import { setWasmPaths } from "@tensorflow/tfjs-backend-wasm";
-import { AnnotatedPrediction } from "@tensorflow-models/face-landmarks-detection/dist/mediapipe-facemesh";
-import * as faceLandmarksDetectionCurrent from "@tensorflow-models/face-landmarks-detection-current";
+import { Face } from '@tensorflow-models/face-landmarks-detection/dist/types';
 import * as faceMesh from "@mediapipe/face_mesh";
 const ctx: Worker = self as any; // eslint-disable-line no-restricted-globals
 
-//let model: facemesh.FaceMesh | null
-let model: faceLandmarksDetection.FaceLandmarksDetector | null = null;
-let model2: faceLandmarksDetectionCurrent.FaceLandmarksDetector | null = null;
+let model2: faceLandmarksDetection.FaceLandmarksDetector | null = null;
 
 let config: FacemeshConfig | null = null;
 
@@ -34,19 +31,10 @@ const load_module = async (config: FacemeshConfig) => {
     }
 };
 
-const predict = async (config: FacemeshConfig, params: FacemeshOperationParams, data: Uint8ClampedArray): Promise<AnnotatedPrediction[] | faceLandmarksDetectionCurrent.Face[]> => {
+const predict = async (config: FacemeshConfig, params: FacemeshOperationParams, data: Uint8ClampedArray): Promise<Face[]> => {
     const newImg = new ImageData(data, params.processWidth, params.processHeight);
 
-    if (model) {
-        await tf.ready();
-        let tensor = tf.browser.fromPixels(newImg);
-        const prediction = await model!.estimateFaces({
-            input: tensor,
-            predictIrises: params.predictIrises,
-        });
-        tensor.dispose();
-        return prediction;
-    } else if (model2) {
+ if (model2) {
         const prediction = await model2.estimateFaces(newImg, { flipHorizontal: false });
         return prediction;
     } else {
@@ -63,21 +51,10 @@ onmessage = async (event) => {
         await tf.ready();
         tf.env().set("WEBGL_CPU_FORWARD", false);
 
-        if (config.modelType === ModelTypes.old) {
-            model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh, config);
-            ctx.postMessage({ message: WorkerResponse.INITIALIZED });
-            try {
-                model2?.dispose();
-            } catch (error) {
-                console.log("this error is ignored", error)
-            }
-            model2 = null;
-        } else if (config.modelType === ModelTypes.mediapipe) {
-            // Maybe this module is not work.....(20220408)
-            model = null;
+    if (config.modelType === ModelTypes.mediapipe) {
             const prevModel2 = model2;
             try {
-                model2 = await faceLandmarksDetectionCurrent.createDetector(faceLandmarksDetectionCurrent.SupportedModels.MediaPipeFaceMesh, {
+                model2 = await faceLandmarksDetection.createDetector(faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh, {
                     runtime: "mediapipe",
                     refineLandmarks: config.model.refineLandmarks,
                     maxFaces: config.model.maxFaces,
@@ -93,9 +70,8 @@ onmessage = async (event) => {
                 console.log("this error is ignored", error)
             }
         } else {
-            model = null;
             const prevModel2 = model2;
-            model2 = await faceLandmarksDetectionCurrent.createDetector(faceLandmarksDetectionCurrent.SupportedModels.MediaPipeFaceMesh, {
+            model2 = await faceLandmarksDetection.createDetector(faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh, {
                 runtime: "tfjs",
                 refineLandmarks: config.model.refineLandmarks,
                 maxFaces: config.model.maxFaces,

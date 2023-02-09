@@ -1,9 +1,6 @@
 import { BrowserTypes } from "@dannadori/worker-base";
-import * as faceLandmarksDetectionCurrent from "@tensorflow-models/face-landmarks-detection-current";
-import { Face, Keypoint } from "@tensorflow-models/face-landmarks-detection-current";
-import { BoundingBox } from "@tensorflow-models/face-landmarks-detection-current/dist/shared/calculators/interfaces/shape_interfaces";
-import { AnnotatedPrediction } from "@tensorflow-models/face-landmarks-detection/dist/mediapipe-facemesh";
-import { Coord2D, Coords3D } from "@tensorflow-models/face-landmarks-detection/dist/mediapipe-facemesh/util";
+import { Face, Keypoint } from "@tensorflow-models/face-landmarks-detection";
+import { BoundingBox } from "@tensorflow-models/face-landmarks-detection/dist/shared/calculators/interfaces/shape_interfaces";
 export const WorkerCommand = {
     INITIALIZE: "initialize",
     PREDICT: "predict",
@@ -70,7 +67,6 @@ export const BackendTypes = {
 export type BackendTypes = typeof BackendTypes[keyof typeof BackendTypes];
 
 export const ModelTypes = {
-    old: "old",
     mediapipe: "mediapipe",
     tfjs: "tfjs",
 } as const;
@@ -117,20 +113,12 @@ export type TrackingArea = {
     yMax: number;
 };
 
-export type FacemeshPredictionOld = {
-    modelType: "old";
-    rowPrediction: AnnotatedPrediction[] | null;
-    singlePersonKeypointsMovingAverage?: Coords3D;
-    singlePersonBoxMovingAverage?: BoundingBox;
-    // trackingArea?: TrackingArea;
-};
-
 export type FacemeshPredictionMediapipe = {
     modelType: "mediapipe" | "tfjs";
     rowPrediction: Face[] | null;
-    singlePersonKeypointsMovingAverage?: Coords3D;
+    singlePersonKeypointsMovingAverage?: any;
     singlePersonBoxMovingAverage?: BoundingBox;
     // trackingArea?: TrackingArea;
 };
 
-export type FaceMeshPredictionEx = FacemeshPredictionOld | FacemeshPredictionMediapipe;
+export type FaceMeshPredictionEx = FacemeshPredictionMediapipe;
