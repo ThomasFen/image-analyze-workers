@@ -1,5 +1,5 @@
 {
-    "name": "@dannadori/blazeface-worker-js",
+    "name": "@about-slevin/blazeface-worker-js",
     "version": "1.0.7",
     "description": "",
     "main": "dist/blazeface-worker.js",
@@ -11,7 +11,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/w-okada/image-analyze-workers.git"
+        "url": "git+https://github.com/ThomasFen/image-analyze-workers.git"
     },
     "keywords": [
         "webworker",
@@ -21,9 +21,9 @@
     "author": "wataru.okada@flect.co.jp",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/w-okada/image-analyze-workers/issues"
+        "url": "https://github.com/ThomasFen/image-analyze-workers/issues"
     },
-    "homepage": "https://github.com/w-okada/image-analyze-workers#readme",
+    "homepage": "https://github.com/ThomasFen/image-analyze-workers#readme",
     "devDependencies": {
         "npm-run-all": "^4.1.5",
         "rimraf": "^3.0.2",
