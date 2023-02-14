@@ -68,7 +68,7 @@ export class LocalBF extends LocalWorker {
             scoreThreshold: config.scoreThreshold,
         });
     };
-    predict = async (config: BlazefaceConfig, params: BlazefaceOperationParams, targetCanvas: HTMLCanvasElement): Promise<BlazeFace.NormalizedFace[] | null> => {
+    predict = async (config: BlazefaceConfig, params: BlazefaceOperationParams, targetCanvas: HTMLCanvasElement | HTMLVideoElement): Promise<BlazeFace.NormalizedFace[] | null> => {
         if (!this.model) {
             return null;
         }
@@ -94,14 +94,27 @@ export class BlazefaceWorkerManager extends WorkerManagerBase {
         );
         return;
     };
-    predict = async (params: BlazefaceOperationParams, targetCanvas: HTMLCanvasElement) => {
+    private canvas: HTMLCanvasElement = document.createElement("canvas");
+    generatecanvas = (target: HTMLCanvasElement | HTMLVideoElement, width: number, height: number) => {
+        if (target.width <= 0 || target.height <= 0) {
+            console.log("target canvas|videois invalid", target);
+            throw new Error("target canvas|video is invalid");
+        }
+        this.canvas.width = width;
+        this.canvas.height = height;
+        const ctx = this.canvas.getContext("2d")!;
+        ctx.drawImage(target, 0, 0, width, height);
+        return this.canvas;
+    };
+
+    predict = async (params: BlazefaceOperationParams, target: HTMLCanvasElement | HTMLVideoElement) => {
         const currentParams = { ...params };
-        const resizedCanvas = this.generateTargetCanvas(targetCanvas, currentParams.processWidth, currentParams.processHeight);
+        const resizedCanvas = this.generatecanvas(target, currentParams.processWidth, currentParams.processHeight);
         if (!this.worker) {
             const prediction = await this.localWorker.predict(this.config, currentParams, resizedCanvas);
             return this.generatePredictionEx(this.config, params, prediction);
         }
-        const imageData = resizedCanvas.getContext("2d")!.getImageData(0, 0, resizedCanvas.width, resizedCanvas.height);
+        const imageData = resizedCanvas.getContext("2d", {willReadFrequently: true})!.getImageData(0, 0, resizedCanvas.width, resizedCanvas.height);
         const prediction = (await this.sendToWorker(currentParams, imageData.data)) as BlazeFace.NormalizedFace[] | null;
         return this.generatePredictionEx(this.config, params, prediction);
     };
